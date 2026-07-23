@@ -36,6 +36,11 @@ async function fetchBybit<T>(url: string): Promise<T> {
       }
 
       if (!response.ok) {
+        if (response.status === 403) {
+          throw new Error(
+            'Bybit HTTP 403: Forbidden (geo-blocked). Deploy outside US/CN — e.g. Vercel region sin1.',
+          );
+        }
         throw new Error(`Bybit HTTP ${response.status}: ${response.statusText}`);
       }
 
