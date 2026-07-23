@@ -3,6 +3,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
 import type { StrategyDirection } from '@/lib/screener/constants';
+import {
+  thresholdsToSearchParams,
+  type ScanThresholds,
+} from '@/lib/screener/scan-thresholds';
 import type { ScanProgress, ScanResult, ScanStreamEvent } from '@/lib/types';
 
 const INITIAL_PROGRESS: ScanProgress = {
@@ -14,10 +18,14 @@ const INITIAL_PROGRESS: ScanProgress = {
 
 async function runScanStream(
   direction: StrategyDirection,
+  thresholds: ScanThresholds,
   signal: AbortSignal,
   onProgress: (progress: ScanProgress) => void,
 ): Promise<ScanResult> {
-  const response = await fetch(`/api/scan?direction=${direction}`, {
+  const params = thresholdsToSearchParams(thresholds);
+  params.set('direction', direction);
+
+  const response = await fetch(`/api/scan?${params.toString()}`, {
     method: 'GET',
     cache: 'no-store',
     signal,
@@ -85,12 +93,24 @@ async function runScanStream(
   return result;
 }
 
-export function useScreener(direction: StrategyDirection, refreshIntervalMs: number) {
+export function useScreener(
+  direction: StrategyDirection,
+  refreshIntervalMs: number,
+  thresholds: ScanThresholds,
+) {
   const [progress, setProgress] = useState<ScanProgress>(INITIAL_PROGRESS);
   const [nowMs, setNowMs] = useState(() => Date.now());
 
   const query = useQuery({
-    queryKey: ['screener', 'scan', direction],
+    queryKey: [
+      'screener',
+      'scan',
+      direction,
+      thresholds.volume24hMin,
+      thresholds.dailyRsi,
+      thresholds.h4Rsi,
+      thresholds.h1Rsi,
+    ],
     queryFn: async ({ signal }) => {
       setProgress({
         status: 'scanning',
@@ -99,7 +119,7 @@ export function useScreener(direction: StrategyDirection, refreshIntervalMs: num
         message: 'Starting scan...',
       });
 
-      const result = await runScanStream(direction, signal, setProgress);
+      const result = await runScanStream(direction, thresholds, signal, setProgress);
 
       setProgress({
         status: 'completed',

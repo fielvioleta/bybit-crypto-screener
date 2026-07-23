@@ -4,6 +4,7 @@ import type { Candle, ScanProgress, ScanResult, ScreenerMatch, SymbolData } from
 import { mapWithConcurrency } from '@/lib/utils';
 import { KLINE_LIMIT, REQUEST_CONCURRENCY, TIMEFRAME, VOLUME_24H_MIN_USDT } from './constants';
 import { getLatestCandleTimestamp, getRsiForCandles } from './helpers';
+import type { ScanThresholds } from './scan-thresholds';
 
 export type ProgressCallback = (progress: ScanProgress) => void;
 
@@ -88,9 +89,11 @@ async function enrichWithIntraday(daily: DailyStageResult): Promise<{
 export async function runScreenerScan(
   strategy: Strategy = createLongStrategy(),
   onProgress?: ProgressCallback,
+  thresholds?: Pick<ScanThresholds, 'volume24hMin'>,
 ): Promise<ScanResult> {
   const startedAt = Date.now();
   let failedSymbols = 0;
+  const volume24hMin = thresholds?.volume24hMin ?? VOLUME_24H_MIN_USDT;
 
   onProgress?.({
     status: 'scanning',
@@ -108,7 +111,7 @@ export async function runScreenerScan(
 
   const liquidSymbols = symbols.filter((symbol) => {
     const ticker = tickerMap.get(symbol);
-    return (ticker?.turnover24h ?? 0) >= VOLUME_24H_MIN_USDT;
+    return (ticker?.turnover24h ?? 0) >= volume24hMin;
   });
 
   onProgress?.({

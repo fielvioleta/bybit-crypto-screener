@@ -1,93 +1,124 @@
+import type { StrategyDirection } from '@/lib/screener/constants';
 import {
-  LONG_DAILY_RSI_MIN,
-  LONG_H1_RSI_MIN,
-  LONG_H4_RSI_MIN,
-  SHORT_DAILY_RSI_MAX,
-  SHORT_H1_RSI_MAX,
-  SHORT_H4_RSI_MAX,
-  VOLUME_24H_MIN_USDT,
-  type StrategyDirection,
-} from '@/lib/screener/constants';
+  getDefaultThresholds,
+  normalizeThresholds,
+  type ScanThresholds,
+} from '@/lib/screener/scan-thresholds';
 import type { Rule } from './rule';
 import { Strategy } from './strategy';
 
-export const volume24hRule: Rule = {
-  id: 'volume-24h',
-  name: `24H Volume >= ${VOLUME_24H_MIN_USDT.toLocaleString()} USDT`,
-  evaluate(data) {
-    return data.volume24h >= VOLUME_24H_MIN_USDT;
-  },
-};
+function createVolumeRule(volume24hMin: number): Rule {
+  return {
+    id: 'volume-24h',
+    name: `24H Volume >= ${volume24hMin.toLocaleString()} USDT`,
+    evaluate(data) {
+      return data.volume24h >= volume24hMin;
+    },
+  };
+}
 
-export const longDailyRsiRule: Rule = {
-  id: 'long-daily-rsi',
-  name: `Daily RSI(14) >= ${LONG_DAILY_RSI_MIN}`,
-  evaluate(data) {
-    return data.dailyRsi >= LONG_DAILY_RSI_MIN;
-  },
-};
+function createLongRules(thresholds: ScanThresholds): Rule[] {
+  return [
+    createVolumeRule(thresholds.volume24hMin),
+    {
+      id: 'long-daily-rsi',
+      name: `Daily RSI(14) >= ${thresholds.dailyRsi}`,
+      evaluate(data) {
+        return data.dailyRsi >= thresholds.dailyRsi;
+      },
+    },
+    {
+      id: 'long-h4-rsi',
+      name: `4H RSI(14) >= ${thresholds.h4Rsi}`,
+      evaluate(data) {
+        return data.h4Rsi >= thresholds.h4Rsi;
+      },
+    },
+    {
+      id: 'long-h1-rsi',
+      name: `1H RSI(14) >= ${thresholds.h1Rsi}`,
+      evaluate(data) {
+        return data.h1Rsi >= thresholds.h1Rsi;
+      },
+    },
+  ];
+}
 
-export const longH4RsiRule: Rule = {
-  id: 'long-h4-rsi',
-  name: `4H RSI(14) >= ${LONG_H4_RSI_MIN}`,
-  evaluate(data) {
-    return data.h4Rsi >= LONG_H4_RSI_MIN;
-  },
-};
+function createShortRules(thresholds: ScanThresholds): Rule[] {
+  return [
+    createVolumeRule(thresholds.volume24hMin),
+    {
+      id: 'short-daily-rsi',
+      name: `Daily RSI(14) <= ${thresholds.dailyRsi}`,
+      evaluate(data) {
+        return data.dailyRsi <= thresholds.dailyRsi;
+      },
+    },
+    {
+      id: 'short-h4-rsi',
+      name: `4H RSI(14) <= ${thresholds.h4Rsi}`,
+      evaluate(data) {
+        return data.h4Rsi <= thresholds.h4Rsi;
+      },
+    },
+    {
+      id: 'short-h1-rsi',
+      name: `1H RSI(14) <= ${thresholds.h1Rsi}`,
+      evaluate(data) {
+        return data.h1Rsi <= thresholds.h1Rsi;
+      },
+    },
+  ];
+}
 
-export const longH1RsiRule: Rule = {
-  id: 'long-h1-rsi',
-  name: `1H RSI(14) >= ${LONG_H1_RSI_MIN}`,
-  evaluate(data) {
-    return data.h1Rsi >= LONG_H1_RSI_MIN;
-  },
-};
-
-export const shortDailyRsiRule: Rule = {
-  id: 'short-daily-rsi',
-  name: `Daily RSI(14) <= ${SHORT_DAILY_RSI_MAX}`,
-  evaluate(data) {
-    return data.dailyRsi <= SHORT_DAILY_RSI_MAX;
-  },
-};
-
-export const shortH4RsiRule: Rule = {
-  id: 'short-h4-rsi',
-  name: `4H RSI(14) <= ${SHORT_H4_RSI_MAX}`,
-  evaluate(data) {
-    return data.h4Rsi <= SHORT_H4_RSI_MAX;
-  },
-};
-
-export const shortH1RsiRule: Rule = {
-  id: 'short-h1-rsi',
-  name: `1H RSI(14) <= ${SHORT_H1_RSI_MAX}`,
-  evaluate(data) {
-    return data.h1Rsi <= SHORT_H1_RSI_MAX;
-  },
-};
-
-export function createLongStrategy(): Strategy {
+export function createLongStrategy(thresholds?: Partial<ScanThresholds>): Strategy {
+  const resolved = normalizeThresholds('long', thresholds);
   return new Strategy(
     'momentum-long',
     'Long Momentum Strategy',
-    [volume24hRule, longDailyRsiRule, longH4RsiRule, longH1RsiRule],
-    (volume24h, dailyRsi) => volume24h >= VOLUME_24H_MIN_USDT && dailyRsi >= LONG_DAILY_RSI_MIN,
+    createLongRules(resolved),
+    (volume24h, dailyRsi) =>
+      volume24h >= resolved.volume24hMin && dailyRsi >= resolved.dailyRsi,
   );
 }
 
-export function createShortStrategy(): Strategy {
+export function createShortStrategy(thresholds?: Partial<ScanThresholds>): Strategy {
+  const resolved = normalizeThresholds('short', thresholds);
   return new Strategy(
     'momentum-short',
     'Short Momentum Strategy',
-    [volume24hRule, shortDailyRsiRule, shortH4RsiRule, shortH1RsiRule],
-    (volume24h, dailyRsi) => volume24h >= VOLUME_24H_MIN_USDT && dailyRsi <= SHORT_DAILY_RSI_MAX,
+    createShortRules(resolved),
+    (volume24h, dailyRsi) =>
+      volume24h >= resolved.volume24hMin && dailyRsi <= resolved.dailyRsi,
   );
 }
 
-export function createStrategy(direction: StrategyDirection): Strategy {
-  return direction === 'short' ? createShortStrategy() : createLongStrategy();
+export function createStrategy(
+  direction: StrategyDirection,
+  thresholds?: Partial<ScanThresholds>,
+): Strategy {
+  return direction === 'short'
+    ? createShortStrategy(thresholds)
+    : createLongStrategy(thresholds);
 }
+
+const defaultLong = getDefaultThresholds('long');
+const defaultShort = getDefaultThresholds('short');
+
+/** @deprecated Prefer createLongStrategy / createStrategy with thresholds. */
+export const volume24hRule: Rule = createVolumeRule(defaultLong.volume24hMin);
+/** @deprecated Prefer createLongStrategy */
+export const longDailyRsiRule: Rule = createLongRules(defaultLong)[1];
+/** @deprecated Prefer createLongStrategy */
+export const longH4RsiRule: Rule = createLongRules(defaultLong)[2];
+/** @deprecated Prefer createLongStrategy */
+export const longH1RsiRule: Rule = createLongRules(defaultLong)[3];
+/** @deprecated Prefer createShortStrategy */
+export const shortDailyRsiRule: Rule = createShortRules(defaultShort)[1];
+/** @deprecated Prefer createShortStrategy */
+export const shortH4RsiRule: Rule = createShortRules(defaultShort)[2];
+/** @deprecated Prefer createShortStrategy */
+export const shortH1RsiRule: Rule = createShortRules(defaultShort)[3];
 
 /** @deprecated Prefer createLongStrategy */
 export function createMomentumStrategy(): Strategy {

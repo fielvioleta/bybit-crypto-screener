@@ -1,5 +1,6 @@
 import { screenerService } from '@/services/screener.service';
 import { isStrategyDirection, type StrategyDirection } from '@/lib/screener/constants';
+import { parseThresholdsFromSearchParams } from '@/lib/screener/scan-thresholds';
 import type { ScanStreamEvent } from '@/lib/types';
 
 export const runtime = 'nodejs';
@@ -20,6 +21,10 @@ function resolveDirection(request: Request): StrategyDirection {
 
 export async function GET(request: Request): Promise<Response> {
   const direction = resolveDirection(request);
+  const thresholds = parseThresholdsFromSearchParams(
+    direction,
+    new URL(request.url).searchParams,
+  );
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream<Uint8Array>({
@@ -31,7 +36,7 @@ export async function GET(request: Request): Promise<Response> {
       try {
         const result = await screenerService.scan(direction, (progress) => {
           send({ type: 'progress', progress });
-        });
+        }, thresholds);
 
         send({ type: 'result', result });
       } catch (error) {

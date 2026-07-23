@@ -33,3 +33,12 @@ export type { ProgressCallback } from './scanner';
 export { getRsiForCandles, getLatestCandleTimestamp } from './helpers';
 export { getScanInsight } from './scan-insight';
 export type { ScanInsight, ScanParameter } from './scan-insight';
+export {
+  getDefaultThresholds,
+  normalizeThresholds,
+  parseThresholdsFromSearchParams,
+  thresholdsEqual,
+  thresholdsToSearchParams,
+  SCAN_THRESHOLDS_STORAGE_KEY,
+} from './scan-thresholds';
+export type { ScanThresholds, StoredScanThresholds } from './scan-thresholds';

@@ -10,6 +10,7 @@ import { StrategyToggle } from '@/components/StrategyToggle';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useCurrentTime } from '@/hooks/useCurrentTime';
 import { useRefreshInterval } from '@/hooks/useRefreshInterval';
+import { useScanThresholds } from '@/hooks/useScanThresholds';
 import { useScreener } from '@/hooks/useScreener';
 import type { StrategyDirection } from '@/lib/screener/constants';
 
@@ -35,9 +36,11 @@ export function ScreenerDashboard() {
   const [direction, setDirection] = useState<StrategyDirection>('long');
   const { minutes: refreshMinutes, intervalMs, setMinutes: setRefreshMinutes } =
     useRefreshInterval();
+  const { thresholds, setThresholds } = useScanThresholds(direction);
   const { result, progress, error, isScanning, secondsUntilRefresh, refresh } = useScreener(
     direction,
     intervalMs,
+    thresholds,
   );
   const currentTime = useCurrentTime();
   const [search, setSearch] = useState('');
@@ -86,7 +89,13 @@ export function ScreenerDashboard() {
         </div>
       </header>
 
-      <ScanParameters direction={direction} refreshMinutes={refreshMinutes} />
+      <ScanParameters
+        direction={direction}
+        refreshMinutes={refreshMinutes}
+        thresholds={thresholds}
+        onThresholdsChange={setThresholds}
+        disabled={isScanning}
+      />
 
       <StatusBar
         secondsUntilRefresh={secondsUntilRefresh}
