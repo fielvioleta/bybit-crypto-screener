@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #f4f4f5;
+  --foreground: #18181b;
+  --surface: #ffffff;
+  --surface-muted: #fafafa;
+  --surface-strong: #f4f4f5;
+  --border: #e4e4e7;
+  --border-strong: #d4d4d8;
+  --muted: #71717a;
+  --subtle: #a1a1aa;
+  --accent-glow: rgba(16, 185, 129, 0.12);
+  --accent-glow-short: rgba(244, 63, 94, 0.1);
+  --hover: rgba(24, 24, 27, 0.04);
+  --active: rgba(24, 24, 27, 0.07);
+  --danger-bg: rgba(254, 226, 226, 0.8);
+  --danger-border: rgba(252, 165, 165, 0.8);
+  --danger-text: #b91c1c;
+}
+
+.dark {
+  --background: #09090b;
+  --foreground: #fafafa;
+  --surface: rgba(24, 24, 27, 0.6);
+  --surface-muted: rgba(24, 24, 27, 0.4);
+  --surface-strong: rgba(9, 9, 11, 0.95);
+  --border: #27272a;
+  --border-strong: #3f3f46;
+  --muted: #a1a1aa;
+  --subtle: #71717a;
+  --accent-glow: rgba(16, 185, 129, 0.12);
+  --accent-glow-short: rgba(244, 63, 94, 0.12);
+  --hover: rgba(39, 39, 42, 0.5);
+  --active: rgba(39, 39, 42, 0.4);
+  --danger-bg: rgba(69, 10, 10, 0.4);
+  --danger-border: rgba(127, 29, 29, 0.6);
+  --danger-text: #fca5a5;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-strong: var(--surface-strong);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+  --color-hover: var(--hover);
+  --color-active: var(--active);
+  --color-danger-bg: var(--danger-bg);
+  --color-danger-border: var(--danger-border);
+  --color-danger-text: var(--danger-text);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -20%, var(--accent-glow), transparent),
+    var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  min-height: 100vh;
+}
+
+* {
+  box-sizing: border-box;
+}
