@@ -3,7 +3,7 @@
 import { ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
 import { BYBIT_REFERRAL_URL } from '@/lib/site';
 
-type BybitReferralCtaVariant = 'inline' | 'empty' | 'footer';
+type BybitReferralCtaVariant = 'inline' | 'empty';
 
 interface BybitReferralCtaProps {
   variant?: BybitReferralCtaVariant;
@@ -13,7 +13,6 @@ const VARIANT_CLASS: Record<BybitReferralCtaVariant, string> = {
   inline:
     'flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-surface px-4 py-3',
   empty: 'mt-4 flex flex-col items-center gap-2',
-  footer: 'flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between',
 };
 
 export function BybitReferralCta({ variant = 'inline' }: BybitReferralCtaProps) {

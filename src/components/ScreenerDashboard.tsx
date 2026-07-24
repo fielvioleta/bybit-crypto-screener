@@ -62,6 +62,8 @@ export function ScreenerDashboard() {
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8">
+      <BybitReferralCta variant="inline" />
+
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-2">
           <p
@@ -138,10 +140,7 @@ export function ScreenerDashboard() {
           }
         />
       ) : (
-        <div className="flex flex-col gap-3">
-          {matches.length > 0 ? <BybitReferralCta variant="inline" /> : null}
-          <ScreenerTable data={matches} search={search} direction={direction} />
-        </div>
+        <ScreenerTable data={matches} search={search} direction={direction} />
       )}
 
       {isScanning && result ? (
