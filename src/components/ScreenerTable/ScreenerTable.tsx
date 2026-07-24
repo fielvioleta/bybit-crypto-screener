@@ -21,6 +21,7 @@ import {
   isStrongRsi,
   strongRsiClassName,
 } from '@/lib/utils';
+import { BybitReferralCta } from '@/components/BybitReferral';
 import { ScreenerRowDetails } from './ScreenerRowDetails';
 
 interface ScreenerTableProps {
@@ -113,6 +114,7 @@ export function ScreenerTable({ data, search, direction }: ScreenerTableProps) {
     return (
       <div className="rounded-xl border border-dashed border-border bg-surface-muted px-6 py-16 text-center">
         <p className="text-sm text-muted">No symbols currently satisfy your strategy.</p>
+        <BybitReferralCta variant="empty" />
       </div>
     );
   }

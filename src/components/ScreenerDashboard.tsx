@@ -1,10 +1,13 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { BybitReferralCta } from '@/components/BybitReferral';
+import { DisclaimerBanner } from '@/components/Disclaimer';
 import { FilterBar } from '@/components/FilterBar';
 import { LoadingSpinner } from '@/components/Loading';
 import { ScanParameters } from '@/components/ScanParameters';
 import { ScreenerTable } from '@/components/ScreenerTable';
+import { SiteFooter } from '@/components/SiteFooter';
 import { StatusBar } from '@/components/StatusBar';
 import { StrategyToggle } from '@/components/StrategyToggle';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -89,6 +92,8 @@ export function ScreenerDashboard() {
         </div>
       </header>
 
+      <DisclaimerBanner />
+
       <ScanParameters
         direction={direction}
         refreshMinutes={refreshMinutes}
@@ -133,7 +138,10 @@ export function ScreenerDashboard() {
           }
         />
       ) : (
-        <ScreenerTable data={matches} search={search} direction={direction} />
+        <div className="flex flex-col gap-3">
+          {matches.length > 0 ? <BybitReferralCta variant="inline" /> : null}
+          <ScreenerTable data={matches} search={search} direction={direction} />
+        </div>
       )}
 
       {isScanning && result ? (
@@ -141,6 +149,8 @@ export function ScreenerDashboard() {
           Refresh in progress — {progress.message}
         </p>
       ) : null}
+
+      <SiteFooter />
     </div>
   );
 }
