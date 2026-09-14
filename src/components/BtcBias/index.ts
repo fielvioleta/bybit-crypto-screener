@@ -1,0 +1,1 @@
+export { BtcBiasStrip } from './BtcBiasStrip';

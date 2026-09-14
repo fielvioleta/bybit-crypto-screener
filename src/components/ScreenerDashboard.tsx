@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { BtcBiasStrip } from '@/components/BtcBias';
 import { BybitReferralCta } from '@/components/BybitReferral';
 import { DisclaimerBanner } from '@/components/Disclaimer';
 import { FilterBar } from '@/components/FilterBar';
@@ -11,6 +12,7 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { StatusBar } from '@/components/StatusBar';
 import { StrategyToggle } from '@/components/StrategyToggle';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { useBtcBias } from '@/hooks/useBtcBias';
 import { useCurrentTime } from '@/hooks/useCurrentTime';
 import { useRefreshInterval } from '@/hooks/useRefreshInterval';
 import { useScanThresholds } from '@/hooks/useScanThresholds';
@@ -45,6 +47,11 @@ export function ScreenerDashboard() {
     intervalMs,
     thresholds,
   );
+  const {
+    bias: btcBias,
+    error: btcBiasError,
+    isLoading: btcBiasLoading,
+  } = useBtcBias(intervalMs);
   const currentTime = useCurrentTime();
   const [search, setSearch] = useState('');
 
@@ -93,6 +100,8 @@ export function ScreenerDashboard() {
           />
         </div>
       </header>
+
+      <BtcBiasStrip bias={btcBias} error={btcBiasError} isLoading={btcBiasLoading} />
 
       <DisclaimerBanner />
 
