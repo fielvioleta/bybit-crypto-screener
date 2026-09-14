@@ -2,8 +2,11 @@
 
 export const RSI_PERIOD = 14;
 
-/** Minimum rolling 24h USDT turnover from Bybit tickers. */
+/** Minimum rolling 24h USDT turnover from Bybit tickers (momentum mode). */
 export const VOLUME_24H_MIN_USDT = 10_000_000;
+
+/** Softer volume floor for early / C-hunt assist mode. */
+export const EARLY_VOLUME_24H_MIN_USDT = 3_000_000;
 
 /** Long (momentum) RSI thresholds — all must be exceeded. */
 export const LONG_DAILY_RSI_MIN = 65;
@@ -14,6 +17,22 @@ export const LONG_H1_RSI_MIN = 70;
 export const SHORT_DAILY_RSI_MAX = 35;
 export const SHORT_H4_RSI_MAX = 35;
 export const SHORT_H1_RSI_MAX = 30;
+
+/** Early / C-hunt long mid-reclaim bands (inclusive). */
+export const EARLY_LONG_DAILY_RSI_MIN = 48;
+export const EARLY_LONG_DAILY_RSI_MAX = 62;
+export const EARLY_LONG_H4_RSI_MIN = 50;
+export const EARLY_LONG_H4_RSI_MAX = 65;
+export const EARLY_LONG_H1_RSI_MIN = 50;
+export const EARLY_LONG_H1_RSI_MAX = 68;
+
+/** Early short mid-band (inclusive) — reclaim from oversold, not already extended. */
+export const EARLY_SHORT_DAILY_RSI_MIN = 38;
+export const EARLY_SHORT_DAILY_RSI_MAX = 52;
+export const EARLY_SHORT_H4_RSI_MIN = 35;
+export const EARLY_SHORT_H4_RSI_MAX = 50;
+export const EARLY_SHORT_H1_RSI_MIN = 32;
+export const EARLY_SHORT_H1_RSI_MAX = 50;
 
 /** RSI highlight bands for strongest long / short readings. */
 export const STRONG_LONG_RSI_HIGHLIGHT = 75;
@@ -75,8 +94,19 @@ export const TIMEFRAME = {
 
 export type StrategyDirection = 'long' | 'short';
 
+/** Momentum = late continuation; Early = C-hunt assist mid-RSI band. */
+export type ScanProfile = 'momentum' | 'early';
+
 export const STRATEGY_DIRECTIONS: readonly StrategyDirection[] = ['long', 'short'] as const;
+
+export const SCAN_PROFILES: readonly ScanProfile[] = ['momentum', 'early'] as const;
+
+export const SCAN_PROFILE_STORAGE_KEY = 'crypto-screener-scan-profile';
 
 export function isStrategyDirection(value: string): value is StrategyDirection {
   return value === 'long' || value === 'short';
+}
+
+export function isScanProfile(value: string): value is ScanProfile {
+  return value === 'momentum' || value === 'early';
 }

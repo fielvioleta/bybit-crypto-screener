@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
-import type { StrategyDirection } from '@/lib/screener/constants';
+import type { ScanProfile, StrategyDirection } from '@/lib/screener/constants';
 import {
   thresholdsToSearchParams,
   type ScanThresholds,
@@ -18,12 +18,14 @@ const INITIAL_PROGRESS: ScanProgress = {
 
 async function runScanStream(
   direction: StrategyDirection,
+  profile: ScanProfile,
   thresholds: ScanThresholds,
   signal: AbortSignal,
   onProgress: (progress: ScanProgress) => void,
 ): Promise<ScanResult> {
   const params = thresholdsToSearchParams(thresholds);
   params.set('direction', direction);
+  params.set('profile', profile);
 
   const response = await fetch(`/api/scan?${params.toString()}`, {
     method: 'GET',
@@ -97,6 +99,7 @@ export function useScreener(
   direction: StrategyDirection,
   refreshIntervalMs: number,
   thresholds: ScanThresholds,
+  profile: ScanProfile,
 ) {
   const [progress, setProgress] = useState<ScanProgress>(INITIAL_PROGRESS);
   const [nowMs, setNowMs] = useState(() => Date.now());
@@ -106,10 +109,14 @@ export function useScreener(
       'screener',
       'scan',
       direction,
+      profile,
       thresholds.volume24hMin,
-      thresholds.dailyRsi,
-      thresholds.h4Rsi,
-      thresholds.h1Rsi,
+      thresholds.dailyRsiMin,
+      thresholds.dailyRsiMax,
+      thresholds.h4RsiMin,
+      thresholds.h4RsiMax,
+      thresholds.h1RsiMin,
+      thresholds.h1RsiMax,
     ],
     queryFn: async ({ signal }) => {
       setProgress({
@@ -119,7 +126,7 @@ export function useScreener(
         message: 'Starting scan...',
       });
 
-      const result = await runScanStream(direction, thresholds, signal, setProgress);
+      const result = await runScanStream(direction, profile, thresholds, signal, setProgress);
 
       setProgress({
         status: 'completed',

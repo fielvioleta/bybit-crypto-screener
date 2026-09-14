@@ -1,5 +1,10 @@
 import { screenerService } from '@/services/screener.service';
-import { isStrategyDirection, type StrategyDirection } from '@/lib/screener/constants';
+import {
+  isScanProfile,
+  isStrategyDirection,
+  type ScanProfile,
+  type StrategyDirection,
+} from '@/lib/screener/constants';
 import { parseThresholdsFromSearchParams } from '@/lib/screener/scan-thresholds';
 import type { ScanStreamEvent } from '@/lib/types';
 
@@ -13,18 +18,21 @@ function encodeEvent(event: ScanStreamEvent): string {
   return `data: ${JSON.stringify(event)}\n\n`;
 }
 
-function resolveDirection(request: Request): StrategyDirection {
-  const { searchParams } = new URL(request.url);
+function resolveDirection(searchParams: URLSearchParams): StrategyDirection {
   const raw = searchParams.get('direction') ?? 'long';
   return isStrategyDirection(raw) ? raw : 'long';
 }
 
+function resolveProfile(searchParams: URLSearchParams): ScanProfile {
+  const raw = searchParams.get('profile') ?? 'momentum';
+  return isScanProfile(raw) ? raw : 'momentum';
+}
+
 export async function GET(request: Request): Promise<Response> {
-  const direction = resolveDirection(request);
-  const thresholds = parseThresholdsFromSearchParams(
-    direction,
-    new URL(request.url).searchParams,
-  );
+  const searchParams = new URL(request.url).searchParams;
+  const direction = resolveDirection(searchParams);
+  const profile = resolveProfile(searchParams);
+  const thresholds = parseThresholdsFromSearchParams(direction, profile, searchParams);
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream<Uint8Array>({
@@ -34,9 +42,14 @@ export async function GET(request: Request): Promise<Response> {
       };
 
       try {
-        const result = await screenerService.scan(direction, (progress) => {
-          send({ type: 'progress', progress });
-        }, thresholds);
+        const result = await screenerService.scan(
+          direction,
+          (progress) => {
+            send({ type: 'progress', progress });
+          },
+          thresholds,
+          profile,
+        );
 
         send({ type: 'result', result });
       } catch (error) {

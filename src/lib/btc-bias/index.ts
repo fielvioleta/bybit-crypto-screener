@@ -57,12 +57,24 @@ export function resolveLongCue(daily: BtcBiasLabel, h4: BtcBiasLabel): BtcLongCu
 export function cueLabel(cue: BtcLongCue): string {
   switch (cue) {
     case 'hunt':
-      return 'Hunt long Cs';
+      return 'OK to hunt C longs — confirm on TV';
     case 'stand_down':
-      return 'Stand down on long Cs';
+      return 'Do not force long Cs';
     case 'mixed':
     default:
-      return 'Mixed — be selective';
+      return 'Mixed — be selective on long Cs';
+  }
+}
+
+export function cueDetail(cue: BtcLongCue): string {
+  switch (cue) {
+    case 'hunt':
+      return 'Daily BTC supports long C setups. Still confirm structure on TradingView before entry.';
+    case 'stand_down':
+      return 'Daily BTC is bearish. Stand down on new long Cs — do not force setups into a dump.';
+    case 'mixed':
+    default:
+      return 'BTC regime is mixed. Only take A+ C structures, smaller size, or wait for clearer bias.';
   }
 }
 

@@ -1,6 +1,7 @@
 'use client';
 
 import type { BtcBiasLabel, BtcBiasSnapshot, BtcLongCue, BtcTimeframeBias } from '@/lib/btc-bias';
+import { cueDetail } from '@/lib/btc-bias';
 import { formatPrice, formatRsi } from '@/lib/utils';
 
 interface BtcBiasStripProps {
@@ -21,12 +22,24 @@ function biasChipClass(label: BtcBiasLabel): string {
   }
 }
 
+function sectionClass(cue: BtcLongCue): string {
+  switch (cue) {
+    case 'hunt':
+      return 'border-emerald-300 dark:border-emerald-800/80';
+    case 'stand_down':
+      return 'border-rose-400 dark:border-rose-800';
+    case 'mixed':
+    default:
+      return 'border-border';
+  }
+}
+
 function cueClass(cue: BtcLongCue): string {
   switch (cue) {
     case 'hunt':
       return 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-200';
     case 'stand_down':
-      return 'border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-200';
+      return 'border-rose-300 bg-rose-100 text-rose-900 dark:border-rose-800 dark:bg-rose-950/50 dark:text-rose-100';
     case 'mixed':
     default:
       return 'border-border bg-surface-muted text-foreground';
@@ -71,7 +84,9 @@ export function BtcBiasStrip({ bias, error, isLoading }: BtcBiasStripProps) {
   }
 
   return (
-    <section className="rounded-xl border border-border bg-surface px-4 py-3 sm:px-5">
+    <section
+      className={`rounded-xl border bg-surface px-4 py-3 sm:px-5 ${sectionClass(bias.cue)}`}
+    >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <div className="flex flex-wrap items-center gap-2">
@@ -82,16 +97,22 @@ export function BtcBiasStrip({ bias, error, isLoading }: BtcBiasStripProps) {
             </span>
           </div>
           <p className="mt-1 text-xs text-muted">
-            Wilder RSI(14) on 1H / 4H / Daily — guidance for long C setups.
+            Wilder RSI(14) on 1H / 4H / Daily — regime check before hunting long Cs.
           </p>
         </div>
 
         <p
-          className={`inline-flex w-fit rounded-full border px-3 py-1 text-xs font-semibold ${cueClass(bias.cue)}`}
+          className={`inline-flex max-w-sm w-fit rounded-full border px-3 py-1.5 text-xs font-semibold leading-snug ${cueClass(bias.cue)}`}
         >
           {bias.cueLabel}
         </p>
       </div>
+
+      <p
+        className={`mt-3 rounded-lg border px-3 py-2 text-xs leading-relaxed ${cueClass(bias.cue)}`}
+      >
+        {cueDetail(bias.cue)}
+      </p>
 
       <div className="mt-3 grid gap-2 sm:grid-cols-3">
         <TimeframeCell frame={bias.h1} />

@@ -1,6 +1,6 @@
 import { createStrategy } from '@/lib/rules';
 import { runScreenerScan, type ProgressCallback } from '@/lib/screener';
-import type { StrategyDirection } from '@/lib/screener/constants';
+import type { ScanProfile, StrategyDirection } from '@/lib/screener/constants';
 import {
   getDefaultThresholds,
   normalizeThresholds,
@@ -17,9 +17,14 @@ export const screenerService = {
     direction: StrategyDirection = 'long',
     onProgress?: ProgressCallback,
     thresholds?: Partial<ScanThresholds>,
+    profile: ScanProfile = 'momentum',
   ): Promise<ScanResult> {
-    const resolved = normalizeThresholds(direction, thresholds ?? getDefaultThresholds(direction));
-    const strategy = createStrategy(direction, resolved);
+    const resolved = normalizeThresholds(
+      direction,
+      profile,
+      thresholds ?? getDefaultThresholds(direction, profile),
+    );
+    const strategy = createStrategy(direction, resolved, profile);
     return runScreenerScan(strategy, onProgress, resolved);
   },
 };
