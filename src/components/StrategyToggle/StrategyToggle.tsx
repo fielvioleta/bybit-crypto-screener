@@ -9,8 +9,8 @@ interface StrategyToggleProps {
 }
 
 const OPTIONS: { id: StrategyDirection; label: string; blurb: string }[] = [
-  { id: 'long', label: 'Long', blurb: 'Long side filter' },
-  { id: 'short', label: 'Short', blurb: 'Short side filter' },
+  { id: 'long', label: 'Long', blurb: 'RSI momentum' },
+  { id: 'short', label: 'Short', blurb: 'RSI oversold' },
 ];
 
 export function StrategyToggle({ direction, onChange, disabled = false }: StrategyToggleProps) {

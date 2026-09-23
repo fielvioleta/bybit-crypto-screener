@@ -8,7 +8,6 @@ import { FilterBar } from '@/components/FilterBar';
 import { HoldDisciplineCallout } from '@/components/HoldDiscipline';
 import { LoadingSpinner } from '@/components/Loading';
 import { ScanParameters } from '@/components/ScanParameters';
-import { ScanProfileToggle } from '@/components/ScanProfileToggle';
 import { ScreenerTable } from '@/components/ScreenerTable';
 import { SiteFooter } from '@/components/SiteFooter';
 import { StatusBar } from '@/components/StatusBar';
@@ -17,56 +16,37 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { useBtcBias } from '@/hooks/useBtcBias';
 import { useCurrentTime } from '@/hooks/useCurrentTime';
 import { useRefreshInterval } from '@/hooks/useRefreshInterval';
-import { useScanProfile } from '@/hooks/useScanProfile';
 import { useScanThresholds } from '@/hooks/useScanThresholds';
 import { useScreener } from '@/hooks/useScreener';
-import type { ScanProfile, StrategyDirection } from '@/lib/screener/constants';
+import type { StrategyDirection } from '@/lib/screener/constants';
 
-const HEADER_COPY: Record<
-  ScanProfile,
-  Record<StrategyDirection, { eyebrow: string; title: string; description: string }>
+const STRATEGY_COPY: Record<
+  StrategyDirection,
+  { eyebrow: string; title: string; description: string }
 > = {
-  early: {
-    long: {
-      eyebrow: 'Early / C-hunt assist',
-      title: 'Pre-pump Candidate Screener',
-      description:
-        'Soft mid-RSI + waking volume shortlist. Confirm C + trend line on TradingView before entry — not auto-entry.',
-    },
-    short: {
-      eyebrow: 'Early short assist',
-      title: 'Early Short Candidate Screener',
-      description:
-        'Mid-band RSI shortlist for structure shorts. Confirm on TradingView — not a substitute for your chart read.',
-    },
+  long: {
+    eyebrow: 'Long tracker',
+    title: 'Crypto Momentum Screener',
+    description:
+      'Live screen of Bybit USDT perpetuals for high-volume long momentum setups.',
   },
-  momentum: {
-    long: {
-      eyebrow: 'Continuation / confirmation',
-      title: 'Long Momentum Screener',
-      description:
-        'High-RSI continuation filter after a move is underway. Use as confirmation — not your primary early C entry.',
-    },
-    short: {
-      eyebrow: 'Continuation / confirmation',
-      title: 'Short Momentum Screener',
-      description:
-        'Oversold continuation filter. Use as confirmation — not a replacement for structure.',
-    },
+  short: {
+    eyebrow: 'Short tracker',
+    title: 'Crypto Short Screener',
+    description:
+      'Live screen of Bybit USDT perpetuals for high-volume short / oversold setups.',
   },
 };
 
 export function ScreenerDashboard() {
   const [direction, setDirection] = useState<StrategyDirection>('long');
-  const { profile, setProfile } = useScanProfile();
   const { minutes: refreshMinutes, intervalMs, setMinutes: setRefreshMinutes } =
     useRefreshInterval();
-  const { thresholds, setThresholds } = useScanThresholds(direction, profile);
+  const { thresholds, setThresholds } = useScanThresholds(direction);
   const { result, progress, error, isScanning, secondsUntilRefresh, refresh } = useScreener(
     direction,
     intervalMs,
     thresholds,
-    profile,
   );
   const {
     bias: btcBias,
@@ -76,7 +56,7 @@ export function ScreenerDashboard() {
   const currentTime = useCurrentTime();
   const [search, setSearch] = useState('');
 
-  const copy = HEADER_COPY[profile][direction];
+  const copy = STRATEGY_COPY[direction];
   const matches = useMemo(() => result?.matches ?? [], [result?.matches]);
   const filteredCount = useMemo(() => {
     const query = search.trim().toUpperCase();
@@ -96,11 +76,9 @@ export function ScreenerDashboard() {
         <div className="space-y-2">
           <p
             className={`text-xs tracking-[0.2em] uppercase ${
-              profile === 'early'
-                ? 'text-sky-600 dark:text-sky-400/80'
-                : direction === 'long'
-                  ? 'text-emerald-600 dark:text-emerald-400/80'
-                  : 'text-rose-600 dark:text-rose-400/80'
+              direction === 'long'
+                ? 'text-emerald-600 dark:text-emerald-400/80'
+                : 'text-rose-600 dark:text-rose-400/80'
             }`}
           >
             {copy.eyebrow} · Bybit USDT Perpetuals
@@ -111,23 +89,13 @@ export function ScreenerDashboard() {
           <p className="max-w-2xl text-sm text-muted">{copy.description}</p>
         </div>
 
-        <div className="flex flex-col items-stretch gap-2 self-start sm:items-end sm:self-auto">
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            <StrategyToggle
-              direction={direction}
-              onChange={(next) => {
-                setSearch('');
-                setDirection(next);
-              }}
-              disabled={isScanning}
-            />
-          </div>
-          <ScanProfileToggle
-            profile={profile}
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <ThemeToggle />
+          <StrategyToggle
+            direction={direction}
             onChange={(next) => {
               setSearch('');
-              setProfile(next);
+              setDirection(next);
             }}
             disabled={isScanning}
           />
@@ -142,7 +110,6 @@ export function ScreenerDashboard() {
 
       <ScanParameters
         direction={direction}
-        profile={profile}
         refreshMinutes={refreshMinutes}
         thresholds={thresholds}
         onThresholdsChange={setThresholds}
@@ -177,11 +144,7 @@ export function ScreenerDashboard() {
 
       {showInitialLoading ? (
         <LoadingSpinner
-          message={
-            profile === 'early'
-              ? `Scanning early ${direction} candidates...`
-              : `Scanning ${direction} continuation setups...`
-          }
+          message={`Scanning ${direction} setups...`}
           detail={
             progress.total > 0
               ? `${progress.scanned} / ${progress.total} symbols`

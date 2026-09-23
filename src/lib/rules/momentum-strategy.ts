@@ -1,7 +1,6 @@
-import type { ScanProfile, StrategyDirection } from '@/lib/screener/constants';
+import type { StrategyDirection } from '@/lib/screener/constants';
 import {
   getDefaultThresholds,
-  inRsiBand,
   normalizeThresholds,
   type ScanThresholds,
 } from '@/lib/screener/scan-thresholds';
@@ -18,129 +17,108 @@ function createVolumeRule(volume24hMin: number): Rule {
   };
 }
 
-function formatBand(min: number, max: number): string {
-  if (min <= 0 && max < 100) {
-    return `<= ${max}`;
-  }
-  if (max >= 100) {
-    return `>= ${min}`;
-  }
-  return `${min}–${max}`;
-}
-
-function createBandRules(thresholds: ScanThresholds): Rule[] {
+function createLongRules(thresholds: ScanThresholds): Rule[] {
   return [
     createVolumeRule(thresholds.volume24hMin),
     {
-      id: 'daily-rsi-band',
-      name: `Daily RSI(14) ${formatBand(thresholds.dailyRsiMin, thresholds.dailyRsiMax)}`,
+      id: 'long-daily-rsi',
+      name: `Daily RSI(14) >= ${thresholds.dailyRsi}`,
       evaluate(data) {
-        return inRsiBand(data.dailyRsi, thresholds.dailyRsiMin, thresholds.dailyRsiMax);
+        return data.dailyRsi >= thresholds.dailyRsi;
       },
     },
     {
-      id: 'h4-rsi-band',
-      name: `4H RSI(14) ${formatBand(thresholds.h4RsiMin, thresholds.h4RsiMax)}`,
+      id: 'long-h4-rsi',
+      name: `4H RSI(14) >= ${thresholds.h4Rsi}`,
       evaluate(data) {
-        return inRsiBand(data.h4Rsi, thresholds.h4RsiMin, thresholds.h4RsiMax);
+        return data.h4Rsi >= thresholds.h4Rsi;
       },
     },
     {
-      id: 'h1-rsi-band',
-      name: `1H RSI(14) ${formatBand(thresholds.h1RsiMin, thresholds.h1RsiMax)}`,
+      id: 'long-h1-rsi',
+      name: `1H RSI(14) >= ${thresholds.h1Rsi}`,
       evaluate(data) {
-        return inRsiBand(data.h1Rsi, thresholds.h1RsiMin, thresholds.h1RsiMax);
+        return data.h1Rsi >= thresholds.h1Rsi;
       },
     },
   ];
 }
 
-function strategyMeta(
-  direction: StrategyDirection,
-  profile: ScanProfile,
-): { id: string; name: string } {
-  if (profile === 'early') {
-    return direction === 'short'
-      ? {
-          id: 'early-short',
-          name: 'Early Short / C-hunt Assist',
-        }
-      : {
-          id: 'early-long',
-          name: 'Early Long / C-hunt Assist',
-        };
-  }
-
-  return direction === 'short'
-    ? {
-        id: 'momentum-short',
-        name: 'Short Continuation / Confirmation',
-      }
-    : {
-        id: 'momentum-long',
-        name: 'Long Continuation / Confirmation',
-      };
+function createShortRules(thresholds: ScanThresholds): Rule[] {
+  return [
+    createVolumeRule(thresholds.volume24hMin),
+    {
+      id: 'short-daily-rsi',
+      name: `Daily RSI(14) <= ${thresholds.dailyRsi}`,
+      evaluate(data) {
+        return data.dailyRsi <= thresholds.dailyRsi;
+      },
+    },
+    {
+      id: 'short-h4-rsi',
+      name: `4H RSI(14) <= ${thresholds.h4Rsi}`,
+      evaluate(data) {
+        return data.h4Rsi <= thresholds.h4Rsi;
+      },
+    },
+    {
+      id: 'short-h1-rsi',
+      name: `1H RSI(14) <= ${thresholds.h1Rsi}`,
+      evaluate(data) {
+        return data.h1Rsi <= thresholds.h1Rsi;
+      },
+    },
+  ];
 }
 
-export function createLongStrategy(
-  thresholds?: Partial<ScanThresholds>,
-  profile: ScanProfile = 'momentum',
-): Strategy {
-  const resolved = normalizeThresholds('long', profile, thresholds);
-  const meta = strategyMeta('long', profile);
+export function createLongStrategy(thresholds?: Partial<ScanThresholds>): Strategy {
+  const resolved = normalizeThresholds('long', thresholds);
   return new Strategy(
-    meta.id,
-    meta.name,
-    createBandRules(resolved),
+    'momentum-long',
+    'Long Momentum Strategy',
+    createLongRules(resolved),
     (volume24h, dailyRsi) =>
-      volume24h >= resolved.volume24hMin &&
-      inRsiBand(dailyRsi, resolved.dailyRsiMin, resolved.dailyRsiMax),
+      volume24h >= resolved.volume24hMin && dailyRsi >= resolved.dailyRsi,
   );
 }
 
-export function createShortStrategy(
-  thresholds?: Partial<ScanThresholds>,
-  profile: ScanProfile = 'momentum',
-): Strategy {
-  const resolved = normalizeThresholds('short', profile, thresholds);
-  const meta = strategyMeta('short', profile);
+export function createShortStrategy(thresholds?: Partial<ScanThresholds>): Strategy {
+  const resolved = normalizeThresholds('short', thresholds);
   return new Strategy(
-    meta.id,
-    meta.name,
-    createBandRules(resolved),
+    'momentum-short',
+    'Short Momentum Strategy',
+    createShortRules(resolved),
     (volume24h, dailyRsi) =>
-      volume24h >= resolved.volume24hMin &&
-      inRsiBand(dailyRsi, resolved.dailyRsiMin, resolved.dailyRsiMax),
+      volume24h >= resolved.volume24hMin && dailyRsi <= resolved.dailyRsi,
   );
 }
 
 export function createStrategy(
   direction: StrategyDirection,
   thresholds?: Partial<ScanThresholds>,
-  profile: ScanProfile = 'momentum',
 ): Strategy {
   return direction === 'short'
-    ? createShortStrategy(thresholds, profile)
-    : createLongStrategy(thresholds, profile);
+    ? createShortStrategy(thresholds)
+    : createLongStrategy(thresholds);
 }
 
-const defaultLong = getDefaultThresholds('long', 'momentum');
-const defaultShort = getDefaultThresholds('short', 'momentum');
+const defaultLong = getDefaultThresholds('long');
+const defaultShort = getDefaultThresholds('short');
 
 /** @deprecated Prefer createLongStrategy / createStrategy with thresholds. */
 export const volume24hRule: Rule = createVolumeRule(defaultLong.volume24hMin);
 /** @deprecated Prefer createLongStrategy */
-export const longDailyRsiRule: Rule = createBandRules(defaultLong)[1];
+export const longDailyRsiRule: Rule = createLongRules(defaultLong)[1];
 /** @deprecated Prefer createLongStrategy */
-export const longH4RsiRule: Rule = createBandRules(defaultLong)[2];
+export const longH4RsiRule: Rule = createLongRules(defaultLong)[2];
 /** @deprecated Prefer createLongStrategy */
-export const longH1RsiRule: Rule = createBandRules(defaultLong)[3];
+export const longH1RsiRule: Rule = createLongRules(defaultLong)[3];
 /** @deprecated Prefer createShortStrategy */
-export const shortDailyRsiRule: Rule = createBandRules(defaultShort)[1];
+export const shortDailyRsiRule: Rule = createShortRules(defaultShort)[1];
 /** @deprecated Prefer createShortStrategy */
-export const shortH4RsiRule: Rule = createBandRules(defaultShort)[2];
+export const shortH4RsiRule: Rule = createShortRules(defaultShort)[2];
 /** @deprecated Prefer createShortStrategy */
-export const shortH1RsiRule: Rule = createBandRules(defaultShort)[3];
+export const shortH1RsiRule: Rule = createShortRules(defaultShort)[3];
 
 /** @deprecated Prefer createLongStrategy */
 export function createMomentumStrategy(): Strategy {
